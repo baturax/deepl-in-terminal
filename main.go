@@ -11,48 +11,57 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
-func main() {
-	configFile()
-	handleInput()
-}
+var text = tview.NewTextView()
+var app = tview.NewApplication()
 
-func handleInput() {
+func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
+		help()
+		return
+	}
+
+	configFile()
+
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'q' || event.Rune() == 'Q' {
+			app.Stop()
+		}
+		return event
+	})
+
+	text.SetDynamicColors(true).
+		SetBorder(true).
+		SetTitle("DeepL Translator - Press 'q' to quit")
+
 	if len(os.Args) < 2 {
 		fmt.Print("Write a word: ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
-		translate(input)
-	} else if os.Args[1] == "--help" || os.Args[1] == "-h" {
-		help()
+		go runTranslation(input)
 	} else {
 		input := strings.Join(os.Args[1:], " ")
-		translate(input)
+		go runTranslation(input)
 	}
-}
 
-func help() {
-	fmt.Println(`Usage:
-   --help, -h    Show this help
-	 config is in: $HOME/.config/deepl-translator/config.json
-	 example json: 
-{
-  "target_language": "TR"
-}
-	`)
+	if err := app.SetRoot(text, true).Run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 type DeeplResponse struct {
 	Translations []Translation `json:"translations"`
 }
-
 type Translation struct {
 	Text string `json:"text"`
 }
 
-func translate(input string) {
+func runTranslation(input string) {
 	apiKey := tokenCheck()
 	urlAPI := "https://api-free.deepl.com/v2/translate"
 
@@ -62,30 +71,53 @@ func translate(input string) {
 	}
 
 	jsonData, err := json.Marshal(requestBody)
-	Err(err)
+	if err != nil {
+		showError("JSON encode error: " + err.Error())
+		return
+	}
 
 	req, err := http.NewRequest("POST", urlAPI, bytes.NewBuffer(jsonData))
-	Err(err)
+	if err != nil {
+		showError("Request error: " + err.Error())
+		return
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "DeepL-Auth-Key "+apiKey)
 
 	resp, err := http.DefaultClient.Do(req)
-	Err(err)
+	if err != nil {
+		showError("HTTP error: " + err.Error())
+		return
+	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	Err(err)
+	if err != nil {
+		showError("Read error: " + err.Error())
+		return
+	}
 
 	var deeplResp DeeplResponse
 	err = json.Unmarshal(body, &deeplResp)
-	Err(err)
+	if err != nil {
+		showError("Unmarshal error: " + err.Error())
+		return
+	}
 
 	if len(deeplResp.Translations) > 0 {
-		fmt.Println(deeplResp.Translations[0].Text)
+		app.QueueUpdateDraw(func() {
+			text.SetText(deeplResp.Translations[0].Text)
+		})
 	} else {
-		fmt.Println("Çeviri alınamadı.")
+		showError("No translation found.")
 	}
+}
+
+func showError(message string) {
+	app.QueueUpdateDraw(func() {
+		text.SetText("[red]Error: " + message)
+	})
 }
 
 type Config struct {
@@ -101,10 +133,10 @@ func configFile() string {
 	Err(err)
 	defer jsonFile.Close()
 
-	fl, err := io.ReadAll(jsonFile)
+	data, err := io.ReadAll(jsonFile)
 	Err(err)
 
-	err = json.Unmarshal(fl, &config)
+	err = json.Unmarshal(data, &config)
 	Err(err)
 
 	return config.TargetLanguage
@@ -122,4 +154,12 @@ func Err(e error) {
 	if e != nil {
 		log.Fatalln(e)
 	}
+}
+
+func help() {
+	fmt.Println(`
+-h, --help
+	for help
+
+Just write the word and over`)
 }
