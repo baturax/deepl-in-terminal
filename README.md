@@ -11,6 +11,7 @@
 {
   "target_language": "TR"
 }
+```
 
 📄 **For language list:**
 https://developers.deepl.com/docs/getting-started/supported-languages#translation-target-languages
