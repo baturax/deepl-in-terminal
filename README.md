@@ -3,7 +3,6 @@ translate in terminal
 # Add your token to: $HOME/.cache/deepltoken
 
 * for config :=
-json
 $HOME/.config/deepl-translator/config.json
 
 {
