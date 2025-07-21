@@ -1,18 +1,20 @@
-translate in terminal
 
-# Add your token to: $HOME/.cache/deepltoken
+# 🌐 Translate in Terminal
 
-* for config :=
-$HOME/.config/deepl-translator/config.json
+🔑 **Add your token to:**  
+`$HOME/.cache/deepltoken`
 
+⚙️ **For config:**  
+`$HOME/.config/deepl-translator/config.json`
+
+```json
 {
   "target_language": "TR"
 }
 
-for lang list: https://developers.deepl.com/docs/getting-started/supported-languages#translation-target-languages
+📄 **For language list:**
+https://developers.deepl.com/docs/getting-started/supported-languages#translation-target-languages
 
 
-### Deepl api is free, you can use a card, set its limit to 0 if you want to
-
-
-Türkçe-İngilizce kelime çevirisi için: https://github.com/baturax/tureng-in-console
+Türkçe-İngilizce kelime çevirisi için:
+https://github.com/baturax/tureng-in-console
