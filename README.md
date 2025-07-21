@@ -12,5 +12,7 @@ $HOME/.config/deepl-translator/config.json
 for lang list: https://developers.deepl.com/docs/getting-started/supported-languages#translation-target-languages
 
 
+### Deepl api is free, you can use a card, set its limit to 0 if you want to
+
 
 Türkçe-İngilizce kelime çevirisi için: https://github.com/baturax/tureng-in-console
